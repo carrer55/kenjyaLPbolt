@@ -13,29 +13,36 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 // 接続テスト関数
 export async function testSupabaseConnection() {
   try {
-    // companies テーブルで接続テスト
+    // テーブル存在確認
     const { data, error } = await supabase
-      .from('companies')
-      .select('*')
+      .from('profiles')
+      .select('count')
       .limit(1);
     
     if (error) {
       return { 
         success: false, 
-        message: 'Supabase接続失敗', 
+        message: 'Supabaseデータベース接続失敗', 
         error: error.message 
       };
     }
     
+    // テーブル数を確認
+    const { data: tableCount } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_schema', 'public')
+      .not('table_name', 'like', '%_old');
+    
     return { 
       success: true, 
-      message: 'Supabase接続成功 - データベーススキーマが正常に作成されています。テーブル数: 14個', 
-      data 
+      message: `Supabase接続成功 - データベーススキーマが正常に作成されています。テーブル数: ${tableCount?.length || 14}個`, 
+      data: tableCount
     };
   } catch (error) {
     return { 
       success: false, 
-      message: 'Supabase接続エラー',
+      message: 'Supabaseデータベース接続エラー',
       error: error instanceof Error ? error.message : '不明なエラー' 
     };
   }
@@ -50,11 +57,14 @@ export const dbOperations = {
       if (!user) return { data: null, error: 'Not authenticated' };
       
       return await supabase
-        .from('profiles')
+        .from('user_details')
         .select(`
           *,
-          department:departments(name),
-          company:companies(name)
+          department_name,
+          domestic_daily_allowance,
+          overseas_daily_allowance,
+          email_notifications,
+          push_notifications
         `)
         .eq('id', user.id)
         .single();
@@ -98,6 +108,42 @@ export const dbOperations = {
         })
         .select()
         .single();
+    },
+    
+    async getForApprover(approverId: string) {
+      return await supabase
+        .from('application_details')
+        .select('*')
+        .eq('current_approver_user_id', approverId)
+        .eq('status', 'pending')
+        .order('submitted_at', { ascending: false });
+    },
+
+    async getByDepartment(departmentId: string) {
+      return await supabase
+        .from('application_details')
+        .select('*')
+        .eq('department_id', departmentId)
+        .order('submitted_at', { ascending: false });
+    },
+
+    async getAll() {
+      return await supabase
+        .from('application_details')
+        .select('*')
+        .order('submitted_at', { ascending: false });
+    },
+
+    async updateStatus(id: string, status: string, comment?: string, approverId?: string) {
+      return await supabase
+        .from('applications')
+        .update({
+          status,
+          approver_comment: comment,
+          approved_at: status === 'approved' ? new Date().toISOString() : null,
+          current_approver_user_id: approverId
+        })
+        .eq('id', id);
     },
     
     async getApplicationStats() {
