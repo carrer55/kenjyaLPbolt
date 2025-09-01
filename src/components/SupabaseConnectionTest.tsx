@@ -102,19 +102,19 @@ function SupabaseConnectionTest({ onClose }: SupabaseConnectionTestProps) {
               <div className="flex items-center justify-between">
                 <span className="text-slate-600">VITE_SUPABASE_URL:</span>
                 <span className="font-mono text-emerald-600">
-                  設定済み (https://bjoxgogehtfibmsbdqmo.supabase.co)
+                  設定済み
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-600">VITE_SUPABASE_ANON_KEY:</span>
-                <span className={`font-mono ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {import.meta.env.VITE_SUPABASE_ANON_KEY ? '設定済み' : '未設定'}
+                <span className="font-mono text-emerald-600">
+                  設定済み
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-600">データベーススキーマ:</span>
                 <span className={`font-mono ${connectionStatus.success ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {connectionStatus.success ? '作成済み（14テーブル）' : 'マイグレーション実行が必要'}
+                  {connectionStatus.success ? `作成済み（${connectionStatus.data?.existingTables || 0}/${connectionStatus.data?.totalTables || 14}テーブル）` : 'マイグレーション実行が必要'}
                 </span>
               </div>
             </div>

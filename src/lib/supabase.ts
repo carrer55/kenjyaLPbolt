@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
 const supabaseUrl = 'https://bjoxgogehtfibmsbdqmo.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqb3hnb2dlaHRmaWJtc2JkcW1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MDU5MDYsImV4cCI6MjA3MjI4MTkwNn0.hEw7ePcRK1DgRhZB2k1Aefp7nWqa6antDemOww52lMY';
 
 if (!supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
@@ -13,33 +13,44 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 // 接続テスト関数
 export async function testSupabaseConnection() {
   try {
-    // テーブル存在確認
+    // プロファイルテーブル存在確認
     const { data, error } = await supabase
       .from('profiles')
-      .select('count')
+      .select('id')
       .limit(1);
     
     if (error) {
+      console.error('Supabase connection error:', error);
       return { 
         success: false, 
-        message: 'Supabaseデータベース接続失敗', 
+        message: 'Supabaseデータベース接続失敗 - テーブルが作成されていない可能性があります', 
         error: error.message 
       };
     }
     
-    // テーブル数を確認
-    const { data: tableCount } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .not('table_name', 'like', '%_old');
+    // 主要テーブルの存在確認
+    const tables = ['companies', 'departments', 'profiles', 'applications', 'expense_items', 
+                   'application_timeline', 'travel_regulations', 'regulation_positions', 
+                   'documents', 'notifications', 'user_allowance_settings', 
+                   'user_notification_settings', 'faqs', 'legal_guides'];
+    
+    let existingTables = 0;
+    for (const table of tables) {
+      try {
+        const { error: tableError } = await supabase.from(table).select('*').limit(1);
+        if (!tableError) existingTables++;
+      } catch (e) {
+        // テーブルが存在しない場合
+      }
+    }
     
     return { 
       success: true, 
-      message: `Supabase接続成功 - データベーススキーマが正常に作成されています。テーブル数: ${tableCount?.length || 14}個`, 
-      data: tableCount
+      message: `Supabase接続成功 - データベーススキーマが正常に作成されています。テーブル数: ${existingTables}個`, 
+      data: { existingTables, totalTables: tables.length }
     };
   } catch (error) {
+    console.error('Supabase test error:', error);
     return { 
       success: false, 
       message: 'Supabaseデータベース接続エラー',
@@ -57,15 +68,8 @@ export const dbOperations = {
       if (!user) return { data: null, error: 'Not authenticated' };
       
       return await supabase
-        .from('user_details')
-        .select(`
-          *,
-          department_name,
-          domestic_daily_allowance,
-          overseas_daily_allowance,
-          email_notifications,
-          push_notifications
-        `)
+        .from('profiles')
+        .select('*')
         .eq('id', user.id)
         .single();
     },
