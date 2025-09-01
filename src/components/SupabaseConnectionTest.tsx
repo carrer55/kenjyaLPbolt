@@ -23,15 +23,14 @@ function SupabaseConnectionTest({ onClose }: SupabaseConnectionTestProps) {
       setConnectionStatus({ loading: true, success: null, message: '' });
       
       // 環境変数の確認
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
-      if (!supabaseUrl || !supabaseAnonKey) {
+      if (!supabaseAnonKey) {
         setConnectionStatus({
           loading: false,
           success: false,
           message: 'Supabase環境変数が設定されていません',
-          error: 'VITE_SUPABASE_URLまたはVITE_SUPABASE_ANON_KEYが見つかりません'
+          error: 'VITE_SUPABASE_ANON_KEYが見つかりません'
         });
         return;
       }
@@ -102,8 +101,8 @@ function SupabaseConnectionTest({ onClose }: SupabaseConnectionTestProps) {
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-slate-600">VITE_SUPABASE_URL:</span>
-                <span className={`font-mono ${import.meta.env.VITE_SUPABASE_URL ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {import.meta.env.VITE_SUPABASE_URL ? '設定済み' : '未設定'}
+                <span className="font-mono text-emerald-600">
+                  設定済み (https://bjoxgogehtfibmsbdqmo.supabase.co)
                 </span>
               </div>
               <div className="flex items-center justify-between">
