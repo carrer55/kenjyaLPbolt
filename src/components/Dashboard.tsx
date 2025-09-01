@@ -27,11 +27,14 @@ import ApproverDashboard from './ApproverDashboard';
 import UserManagement from './UserManagement';
 import AdminApplicationList from './AdminApplicationList';
 import AdminApplicationDetail from './AdminApplicationDetail';
+import { Database } from 'lucide-react';
+import SupabaseConnectionTest from './SupabaseConnectionTest';
 import { useUserProfile } from './UserProfileProvider';
 
 function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [showSupabaseTest, setShowSupabaseTest] = useState(false);
   const [applicationDetail, setApplicationDetail] = useState<{type: 'business-trip' | 'expense', id: string} | null>(null);
   const [documentType, setDocumentType] = useState<string>('');
   const [documentId, setDocumentId] = useState<string>('');
@@ -106,6 +109,8 @@ function Dashboard() {
         return <AdminApplicationList onNavigate={navigateToView} />;
       case 'admin-application-detail':
         return <AdminApplicationDetail onNavigate={navigateToView} />;
+      case 'supabase-test':
+        return <SupabaseConnectionTest onClose={() => setCurrentView('dashboard')} />;
       case 'application-detail':
         return applicationDetail ? (
           <ApplicationDetail 
@@ -140,6 +145,15 @@ function Dashboard() {
               <TopBar onMenuClick={toggleSidebar} onNavigate={navigateToView} />
               <MainContent onNavigate={navigateToView} onShowDetail={showApplicationDetail} />
             </div>
+            
+            {/* Supabase接続テスト用のフローティングボタン */}
+            <button
+              onClick={() => setCurrentView('supabase-test')}
+              className="fixed bottom-8 left-8 z-40 flex items-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-full font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105"
+            >
+              <Database className="w-5 h-5" />
+              <span>DB接続テスト</span>
+            </button>
           </div>
         );
     }
