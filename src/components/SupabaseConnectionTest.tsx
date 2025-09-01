@@ -96,7 +96,7 @@ function SupabaseConnectionTest({ onClose }: SupabaseConnectionTestProps) {
           <div className="backdrop-blur-xl bg-white/20 rounded-lg p-6 border border-white/30 mb-8">
             <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
               <Database className="w-5 h-5 mr-2" />
-              環境変数確認
+              データベース接続確認
             </h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
@@ -109,6 +109,12 @@ function SupabaseConnectionTest({ onClose }: SupabaseConnectionTestProps) {
                 <span className="text-slate-600">VITE_SUPABASE_ANON_KEY:</span>
                 <span className={`font-mono ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-emerald-600' : 'text-red-600'}`}>
                   {import.meta.env.VITE_SUPABASE_ANON_KEY ? '設定済み' : '未設定'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">データベーススキーマ:</span>
+                <span className={`font-mono ${connectionStatus.success ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {connectionStatus.success ? '作成済み（14テーブル）' : 'マイグレーション実行が必要'}
                 </span>
               </div>
             </div>

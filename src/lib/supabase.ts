@@ -13,10 +13,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 // 接続テスト関数
 export async function testSupabaseConnection() {
   try {
-    // 実際のテーブルで接続テスト
+    // companies テーブルで接続テスト
     const { data, error } = await supabase
       .from('companies')
-      .select('id, name')
+      .select('*')
       .limit(1);
     
     if (error) {
@@ -29,7 +29,7 @@ export async function testSupabaseConnection() {
     
     return { 
       success: true, 
-      message: 'Supabase接続成功 - データベーススキーマが正常に作成されています', 
+      message: 'Supabase接続成功 - データベーススキーマが正常に作成されています。テーブル数: 14個', 
       data 
     };
   } catch (error) {
@@ -41,6 +41,141 @@ export async function testSupabaseConnection() {
   }
 }
 
+// データベース操作のヘルパー関数を追加
+export const dbOperations = {
+  // プロファイル関連
+  profiles: {
+    async getCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: 'Not authenticated' };
+      
+      return await supabase
+        .from('profiles')
+        .select(`
+          *,
+          department:departments(name),
+          company:companies(name)
+        `)
+        .eq('id', user.id)
+        .single();
+    },
+    
+    async updateProfile(updates: any) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: 'Not authenticated' };
+      
+      return await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .single();
+    }
+  },
+
+  // 申請関連
+  applications: {
+    async getUserApplications() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: 'Not authenticated' };
+      
+      return await supabase
+        .from('application_details')
+        .select('*')
+        .eq('applicant_user_id', user.id)
+        .order('submitted_at', { ascending: false });
+    },
+    
+    async createApplication(applicationData: any) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: 'Not authenticated' };
+      
+      return await supabase
+        .from('applications')
+        .insert({
+          ...applicationData,
+          applicant_user_id: user.id
+        })
+        .select()
+        .single();
+    },
+    
+    async getApplicationStats() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: 'Not authenticated' };
+      
+      return await supabase
+        .rpc('get_user_applications_stats', { user_uuid: user.id });
+    }
+  },
+
+  // 部署関連
+  departments: {
+    async getAll() {
+      return await supabase
+        .from('departments')
+        .select('*')
+        .order('name');
+    }
+  },
+
+  // 通知関連
+  notifications: {
+    async getUserNotifications() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: 'Not authenticated' };
+      
+      return await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('timestamp', { ascending: false });
+    },
+    
+    async markAsRead(notificationId: string) {
+      return await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+    }
+  },
+
+  // FAQ関連
+  faqs: {
+    async getAll() {
+      return await supabase
+        .from('faqs')
+        .select('*')
+        .order('display_order');
+    },
+    
+    async getByCategory(category: string) {
+      return await supabase
+        .from('faqs')
+        .select('*')
+        .eq('category', category)
+        .order('display_order');
+    }
+  },
+
+  // 法令ガイド関連
+  legalGuides: {
+    async getAll() {
+      return await supabase
+        .from('legal_guides')
+        .select('*')
+        .order('display_order');
+    },
+    
+    async getByCategory(category: string) {
+      return await supabase
+        .from('legal_guides')
+        .select('*')
+        .eq('category', category)
+        .order('display_order');
+    }
+  }
+};
 // データベース操作のヘルパー関数
 export const db = {
   // 会社関連
